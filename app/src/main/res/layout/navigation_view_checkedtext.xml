@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="?attr/listPreferredItemHeightSmall"
     android:background="?attr/selectableItemBackground"
@@ -12,7 +14,7 @@
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:drawablePadding="@dimen/material_component_lists_icon_left_padding"
+        android:drawablePadding="8dp"
         android:gravity="center_vertical|start"
         android:maxLines="1"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1" />

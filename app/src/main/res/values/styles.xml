@@ -63,6 +63,10 @@
         <item name="android:textColor">?android:attr/textColorSecondary</item>
     </style>
 
+    <style name="TextAppearance.Regular.Body2">
+        <item name="android:textSize">12sp</item>
+    </style>
+
     <style name="TextAppearance.Regular.Caption">
         <item name="android:textSize">12sp</item>
     </style>
@@ -235,6 +239,14 @@
         <item name="hintTextColor">?attr/colorSecondary</item>
     </style>
 
+
+    <style name="Theme.Widget.TabLayout" parent="Widget.Design.TabLayout">
+        <item name="tabIndicatorColor">?attr/colorAccent</item>
+        <item name="tabIndicatorHeight">2dp</item>
+        <item name="tabIndicatorGravity">bottom</item>
+        <item name="tabGravity">fill</item>
+        <item name="tabMode">fixed</item>
+    </style>
 
     <!--==============-->
     <!--Widgets.Button-->
