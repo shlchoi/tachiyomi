@@ -7,22 +7,26 @@
         android:id="@+id/action_download"
         android:title="@string/action_download"
         android:visible="true"
+        app:iconTint="?icon_color"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_delete"
         android:title="@string/action_delete"
         android:visible="false"
+        app:iconTint="?icon_color"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_mark_as_read"
         android:title="@string/action_mark_as_read"
+        app:iconTint="?icon_color"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_mark_as_unread"
         android:title="@string/action_mark_as_unread"
+        app:iconTint="?icon_color"
         app:showAsAction="ifRoom" />
 
 </menu>

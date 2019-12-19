@@ -12,6 +12,7 @@
         android:id="@+id/action_settings"
         android:icon="@drawable/ic_filter_list_white_24dp"
         android:title="@string/action_filter"
+        app:iconTint="?icon_color"
         app:showAsAction="ifRoom" />
 
 </menu>

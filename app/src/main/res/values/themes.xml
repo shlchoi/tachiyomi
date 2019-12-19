@@ -10,9 +10,9 @@
     <!-- Light Themes -->
     <!--=======-======-->
     <style name="Theme.Base" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimary">@color/backgroundLight</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccentLight</item>
+        <item name="colorAccent">@color/colorPrimaryDark</item>
         <item name="android:textColorPrimary">@color/textColorPrimaryLight</item>
         <item name="android:textColorSecondary">@color/textColorSecondaryLight</item>
         <item name="android:textColorHint">@color/textColorHintLight</item>
@@ -29,7 +29,6 @@
         <item name="actionBarTheme">@style/Theme.ActionBar.Light</item>
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
         <item name="alertDialogTheme">@style/Theme.AlertDialog.Light</item>
-
 
         <!-- Custom Attributes-->
         <item name="selectable_list_drawable">@drawable/list_item_selector_light</item>

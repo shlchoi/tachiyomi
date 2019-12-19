@@ -74,7 +74,7 @@ open class ExtendedNavigationView @JvmOverloads constructor(
              */
             fun tintVector(context: Context, resId: Int): Drawable {
                 return VectorDrawableCompat.create(context.resources, resId, context.theme)!!.apply {
-                    setTint(context.getResourceColor(R.attr.colorAccent))
+                    setTint(context.getResourceColor(R.attr.icon_color))
                 }
             }
         }
@@ -162,7 +162,7 @@ open class ExtendedNavigationView @JvmOverloads constructor(
      */
     abstract inner class Adapter(private val items: List<Item>) : RecyclerView.Adapter<Holder>() {
 
-        private val onClick = View.OnClickListener {
+        private val onClick = OnClickListener {
             val pos = recycler.getChildAdapterPosition(it)
             val item = items[pos]
             onItemClicked(item)

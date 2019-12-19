@@ -4,16 +4,20 @@
     <!--========-->
     <!--Toolbars-->
     <!--========-->
-    <style name="Theme.ActionBar" parent="@style/ThemeOverlay.AppCompat.ActionBar" />
+    <style name="Theme.ActionBar" parent="@style/ThemeOverlay.AppCompat.ActionBar"/>
 
-    <style name="Theme.ActionBar.Light" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+    <style name="Theme.ActionBar.Light" parent="@style/ThemeOverlay.AppCompat.ActionBar">
         <item name="popupTheme">@style/ThemeOverlay.AppCompat.Light</item>
+        <item name="colorPrimary">@color/backgroundLight</item>
+        <item name="android:textColorSecondary">@color/iconColorLight</item>
     </style>
 
     <!--====-->
     <!--Tabs-->
     <!--====-->
-    <style name="Theme.ActionBar.Tab" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <style name="Theme.ActionBar.Tab" parent="ThemeOverlay.AppCompat.ActionBar">
+        <item name="colorPrimary">@android:color/white</item>
+    </style>
 
     <!--===========-->
     <!--AlertDialog-->
@@ -23,7 +27,8 @@
     <style name="Theme.AlertDialog.Light" parent="Theme.AppCompat.Light.Dialog.Alert">
         <item name="android:windowMinWidthMajor">@android:dimen/dialog_min_width_major</item>
         <item name="android:windowMinWidthMinor">@android:dimen/dialog_min_width_minor</item>
-        <item name="colorAccent">@color/colorAccentLight</item>
+        <item name="colorAccent">?colorAccent</item>
+        <item name="android:padding">0dp</item>
     </style>
 
     <style name="Theme.AlertDialog.Dark" parent="Theme.AppCompat.Dialog.Alert">
@@ -39,7 +44,9 @@
     <!--==============-->
     <!--NavigationView-->
     <!--==============-->
-    <style name="Theme.Widget.NavigationView" />
+    <style name="Theme.Widget.NavigationView">
+        <item name="android:colorPrimary">?colorAccent</item>
+    </style>
 
     <style name="Theme.Widget.NavigationView.Dark">
         <item name="colorControlHighlight">@color/md_grey_900</item>
@@ -71,6 +78,10 @@
 
     <style name="TextAppearance.Regular.Body1.Secondary">
         <item name="android:textColor">?android:attr/textColorSecondary</item>
+    </style>
+
+    <style name="TextAppearance.Regular.Body2">
+        <item name="android:textSize">12sp</item>
     </style>
 
     <style name="TextAppearance.Regular.Caption">
@@ -198,6 +209,14 @@
         <item name="android:background">?attr/selectable_list_drawable</item>
     </style>
 
+    <style name="Theme.Widget.TabLayout" parent="Widget.Design.TabLayout">
+        <item name="tabIndicatorColor">?attr/colorAccent</item>
+        <item name="tabIndicatorHeight">2dp</item>
+        <item name="tabIndicatorGravity">bottom</item>
+        <item name="tabGravity">fill</item>
+        <item name="tabMode">fixed</item>
+    </style>
+
     <!--==============-->
     <!--Widgets.Button-->
     <!--==============-->
@@ -243,7 +262,7 @@
         <item name="nnf_toolbarTheme">@style/ThemeOverlay.AppCompat.Dark.ActionBar</item>
     </style>
 
-    <style name="FilePickerAlertDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert"></style>
+    <style name="FilePickerAlertDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert"/>
 
     <style name="reader_settings_popup_animation">
         <item name="android:windowEnterAnimation">@anim/enter_from_right</item>

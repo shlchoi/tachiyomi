@@ -7,6 +7,7 @@
         android:icon="@drawable/ic_play_arrow_white_24dp"
         android:title="@string/action_start"
         android:visible="false"
+        app:iconTint="?icon_color"
         app:showAsAction="ifRoom" />
 
     <item
@@ -14,12 +15,14 @@
         android:icon="@drawable/ic_pause_white_24dp"
         android:title="@string/action_pause"
         android:visible="false"
+        app:iconTint="?icon_color"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/clear_queue"
         android:title="@string/action_clear"
         android:visible="false"
+        app:iconTint="?icon_color"
         app:showAsAction="never" />
 
 </menu>
