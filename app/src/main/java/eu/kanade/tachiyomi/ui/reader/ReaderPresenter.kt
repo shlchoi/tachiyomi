@@ -88,17 +88,22 @@ class ReaderPresenter(
         val selectedChapter = dbChapters.find { it.id == chapterId }
                 ?: error("Requested chapter of id $chapterId not found in chapter list")
 
-        val chaptersForReader =
-                if (preferences.skipRead()) {
-                    val list = dbChapters.filter { !it.read }.toMutableList()
-                    val find = list.find { it.id == chapterId }
-                    if (find == null) {
-                        list.add(selectedChapter)
-                    }
-                    list
-                } else {
-                    dbChapters
-                }
+        val chaptersForReader = {
+            val list = dbChapters.filter { chapter ->
+                val unreadFilter = !(manga.readFilter == Manga.SHOW_UNREAD || preferences.skipRead()) || !chapter.read
+                val readFilter = manga.readFilter != Manga.SHOW_READ || chapter.read
+
+                val downloadedFilter = manga.downloadedFilter != Manga.SHOW_DOWNLOADED || downloadManager.isChapterDownloaded(chapter, manga)
+                val bookmarkedFilter = manga.bookmarkedFilter != Manga.SHOW_BOOKMARKED || chapter.bookmark
+                unreadFilter && readFilter && downloadedFilter && bookmarkedFilter
+            }.toMutableList()
+
+            val find = list.find { it.id == chapterId }
+            if (find == null) {
+                list.add(selectedChapter)
+            }
+            list
+        }()
 
         when (manga.sorting) {
             Manga.SORTING_SOURCE -> ChapterLoadBySource().get(chaptersForReader)
