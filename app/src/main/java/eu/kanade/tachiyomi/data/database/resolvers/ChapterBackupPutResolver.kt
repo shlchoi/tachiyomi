@@ -29,6 +29,7 @@ class ChapterBackupPutResolver : PutResolver<Chapter>() {
         put(ChapterTable.COL_READ, chapter.read)
         put(ChapterTable.COL_BOOKMARK, chapter.bookmark)
         put(ChapterTable.COL_LAST_PAGE_READ, chapter.last_page_read)
+        put(ChapterTable.COL_HIDDEN, chapter.isHiddenInList)
     }
 
 }

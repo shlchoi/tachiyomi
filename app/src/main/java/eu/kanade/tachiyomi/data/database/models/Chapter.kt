@@ -19,6 +19,8 @@ interface Chapter : SChapter, Serializable {
 
     var source_order: Int
 
+    var isHiddenInList: Boolean
+
     val isRecognizedNumber: Boolean
         get() = chapter_number >= 0f
 

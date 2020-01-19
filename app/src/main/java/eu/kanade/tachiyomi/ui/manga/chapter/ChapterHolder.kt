@@ -35,6 +35,8 @@ class ChapterHolder(
             else -> chapter.name
         }
 
+        chapter_visibility.visibility = if (item.isHiddenInList) View.VISIBLE else View.GONE
+
         // Set the correct drawable for dropdown and update the tint to match theme.
         chapter_menu.setVectorCompat(R.drawable.ic_more_vert_black_24dp, view.context.getResourceColor(R.attr.icon_color))
 
@@ -108,6 +110,9 @@ class ChapterHolder(
         if (chapter.read) {
             popup.menu.findItem(R.id.action_mark_as_read).isVisible = false
         }
+
+        val showHideChapterItemStringRes = if (item.isHiddenInList) R.string.action_show_chapter else R.string.action_hide_chapter
+        popup.menu.findItem(R.id.action_show_hide_chapter).setTitle(showHideChapterItemStringRes)
 
         // Set a listener so we are notified if a menu item is clicked
         popup.setOnMenuItemClickListener { menuItem ->

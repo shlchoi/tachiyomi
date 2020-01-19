@@ -186,6 +186,9 @@ class ChaptersPresenter(
         if (onlyBookmarked()) {
             observable = observable.filter { it.bookmark }
         }
+        if (!showHidden()) {
+            observable = observable.filter { !it.isHiddenInList }
+        }
         val sortFunction: (Chapter, Chapter) -> Int = when (manga.sorting) {
             Manga.SORTING_SOURCE -> when (sortDescending()) {
                 true -> { c1, c2 -> c1.source_order.compareTo(c2.source_order) }
@@ -268,6 +271,18 @@ class ChaptersPresenter(
                 .subscribe()
     }
 
+    fun markChaptersAsHidden(selectedChapters: List<ChapterItem>, hidden: Boolean) {
+        Observable.from(selectedChapters)
+                .doOnNext { chapter ->
+                    chapter.isHiddenInList = hidden
+                }
+                .toList()
+                .flatMap { db.updateChaptersProgress(it).asRxObservable() }
+                .subscribeOn(Schedulers.io())
+                .subscribe()
+    }
+
+
     /**
      * Deletes the given list of chapter.
      * @param chapters the list of chapters to delete.
@@ -344,6 +359,13 @@ class ChaptersPresenter(
         refreshChapters()
     }
 
+    fun setHiddenFilter(showHidden: Boolean) {
+        manga.showHidden = if (showHidden) Manga.SHOW_HIDDEN else Manga.SHOW_ALL
+        db.updateFlags(manga).executeAsBlocking()
+        refreshChapters()
+    }
+
+
     /**
      * Removes all filters and requests an UI update.
      */
@@ -351,6 +373,7 @@ class ChaptersPresenter(
         manga.readFilter = Manga.SHOW_ALL
         manga.downloadedFilter = Manga.SHOW_ALL
         manga.bookmarkedFilter = Manga.SHOW_ALL
+        manga.showHidden = Manga.SHOW_ALL
         db.updateFlags(manga).executeAsBlocking()
         refreshChapters()
     }
@@ -407,6 +430,10 @@ class ChaptersPresenter(
      */
     fun onlyRead(): Boolean {
         return manga.readFilter == Manga.SHOW_READ
+    }
+
+    fun showHidden(): Boolean {
+        return manga.showHidden == Manga.SHOW_HIDDEN
     }
 
     /**

@@ -45,6 +45,8 @@
     <string name="action_mark_as_read">Mark as read</string>
     <string name="action_mark_as_unread">Mark as unread</string>
     <string name="action_mark_previous_as_read">Mark previous as read</string>
+    <string name="action_hide_chapter">Hide chapter</string>
+    <string name="action_show_chapter">Show chapter</string>
     <string name="action_download">Download</string>
     <string name="action_bookmark">Bookmark</string>
     <string name="action_remove_bookmark">Remove bookmark</string>

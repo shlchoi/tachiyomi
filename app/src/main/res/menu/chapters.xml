@@ -25,6 +25,10 @@
                 android:checkable="true"
                 android:title="@string/action_filter_bookmarked" />
             <item
+                android:id="@+id/action_filter_hidden"
+                android:checkable="true"
+                android:title="Show hidden"/>
+            <item
                 android:id="@+id/action_filter_empty"
                 android:title="@string/action_filter_empty" />
         </menu>

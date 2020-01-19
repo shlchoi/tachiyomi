@@ -171,11 +171,19 @@ class ChaptersController : NucleusController<ChaptersPresenter>(),
             R.id.action_filter_downloaded -> {
                 item.isChecked = !item.isChecked
                 presenter.setDownloadedFilter(item.isChecked)
+                activity?.invalidateOptionsMenu()
             }
             R.id.action_filter_bookmarked -> {
                 item.isChecked = !item.isChecked
                 presenter.setBookmarkedFilter(item.isChecked)
+                activity?.invalidateOptionsMenu()
             }
+            R.id.action_filter_hidden -> {
+                item.isChecked = !item.isChecked
+                presenter.setHiddenFilter(item.isChecked)
+                activity?.invalidateOptionsMenu()
+            }
+
             R.id.action_filter_empty -> {
                 presenter.removeFilters()
                 activity?.invalidateOptionsMenu()
@@ -330,17 +338,43 @@ class ChaptersController : NucleusController<ChaptersPresenter>(),
             destroyActionModeIfNeeded()
         } else {
             mode.title = resources?.getString(R.string.label_selected, count)
+            val selectedChapters = getSelectedChapters()
+            val readMenuItem = menu.findItem(R.id.action_mark_as_read)
+            if (selectedChapters.firstOrNull()?.read == true) {
+                readMenuItem.setIcon(R.drawable.ic_book_black_24dp)
+                readMenuItem.setTitle(R.string.action_mark_as_unread)
+            } else {
+                readMenuItem.setIcon(R.drawable.ic_book_open_24dp)
+                readMenuItem.setTitle(R.string.action_mark_as_read)
+            }
+
+            val visibilityMenuItem = menu.findItem(R.id.action_show_hide_chapter)
+            if (selectedChapters.firstOrNull()?.isHiddenInList == true) {
+                visibilityMenuItem.setIcon(R.drawable.ic_visibility_black_24dp)
+                visibilityMenuItem.setTitle(R.string.action_show_chapter)
+            } else {
+                visibilityMenuItem.setIcon(R.drawable.ic_visibility_off_black_24dp)
+                visibilityMenuItem.setTitle(R.string.action_hide_chapter)
+            }
+
         }
         return false
     }
 
     override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
+        val selectedChapters = getSelectedChapters()
         when (item.itemId) {
             R.id.action_select_all -> selectAll()
-            R.id.action_mark_as_read -> markAsRead(getSelectedChapters())
-            R.id.action_mark_as_unread -> markAsUnread(getSelectedChapters())
+            R.id.action_mark_as_read -> {
+                if (selectedChapters.firstOrNull()?.read == true) {
+                    markAsUnread(selectedChapters)
+                } else {
+                    markAsRead(selectedChapters)
+                }
+            }
             R.id.action_download -> downloadChapters(getSelectedChapters())
             R.id.action_delete -> showDeleteChaptersConfirmationDialog()
+            R.id.action_show_hide_chapter -> markAsHidden(selectedChapters, !(selectedChapters.firstOrNull()?.isHiddenInList ?: false))
             else -> return false
         }
         return true
@@ -370,6 +404,8 @@ class ChaptersController : NucleusController<ChaptersPresenter>(),
             R.id.action_mark_as_read -> markAsRead(chapters)
             R.id.action_mark_as_unread -> markAsUnread(chapters)
             R.id.action_mark_previous_as_read -> markPreviousAsRead(chapter)
+            R.id.action_show_hide_chapter -> markAsHidden(chapters, !chapter.isHiddenInList)
+            R.id.action_mark_as_visible -> markAsHidden(chapters, false)
         }
     }
 
@@ -404,6 +440,10 @@ class ChaptersController : NucleusController<ChaptersPresenter>(),
                 }
             }
         }
+    }
+
+    private fun markAsHidden(chapters: List<ChapterItem>, hidden: Boolean) {
+        presenter.markChaptersAsHidden(chapters, hidden)
     }
 
     private fun showDeleteChaptersConfirmationDialog() {
