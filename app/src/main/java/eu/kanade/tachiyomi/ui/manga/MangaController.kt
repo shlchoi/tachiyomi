@@ -796,6 +796,7 @@ class MangaController :
             binding.actionToolbar.findItem(R.id.action_delete)?.isVisible = !isLocalSource && chapters.any { it.isDownloaded }
             binding.actionToolbar.findItem(R.id.action_bookmark)?.isVisible = chapters.any { !it.chapter.bookmark }
             binding.actionToolbar.findItem(R.id.action_remove_bookmark)?.isVisible = chapters.all { it.chapter.bookmark }
+            binding.actionToolbar.findItem(R.id.action_show_hide_chapter)?.setIcon(if (chapters.firstOrNull()?.isHidden == true) R.drawable.ic_visibility_black_24dp else R.drawable.ic_visibility_off_black_24dp)
             binding.actionToolbar.findItem(R.id.action_mark_as_read)?.isVisible = chapters.any { !it.chapter.read }
             binding.actionToolbar.findItem(R.id.action_mark_as_unread)?.isVisible = chapters.all { it.chapter.read }
 
@@ -811,16 +812,18 @@ class MangaController :
     }
 
     private fun onActionItemClicked(item: MenuItem): Boolean {
+        val selectedChapters = getSelectedChapters()
         when (item.itemId) {
             R.id.action_select_all -> selectAll()
             R.id.action_select_inverse -> selectInverse()
-            R.id.action_download -> downloadChapters(getSelectedChapters())
+            R.id.action_download -> downloadChapters(selectedChapters)
             R.id.action_delete -> showDeleteChaptersConfirmationDialog()
-            R.id.action_bookmark -> bookmarkChapters(getSelectedChapters(), true)
-            R.id.action_remove_bookmark -> bookmarkChapters(getSelectedChapters(), false)
-            R.id.action_mark_as_read -> markAsRead(getSelectedChapters())
-            R.id.action_mark_as_unread -> markAsUnread(getSelectedChapters())
-            R.id.action_mark_previous_as_read -> markPreviousAsRead(getSelectedChapters())
+            R.id.action_bookmark -> bookmarkChapters(selectedChapters, true)
+            R.id.action_remove_bookmark -> bookmarkChapters(selectedChapters, false)
+            R.id.action_mark_as_read -> markAsRead(selectedChapters)
+            R.id.action_mark_as_unread -> markAsUnread(selectedChapters)
+            R.id.action_mark_previous_as_read -> markPreviousAsRead(selectedChapters)
+            R.id.action_show_hide_chapter -> markAsHidden(selectedChapters, selectedChapters.firstOrNull()?.isHidden == false)
             else -> return false
         }
         return true
@@ -982,5 +985,9 @@ class MangaController :
          * Key to change the cover of a manga in [onActivityResult].
          */
         const val REQUEST_IMAGE_OPEN = 101
+    }
+
+    private fun markAsHidden(chapters: List<ChapterItem>, hidden: Boolean) {
+        presenter.markChaptersAsHidden(chapters, hidden)
     }
 }

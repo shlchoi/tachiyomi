@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.data.database.tables.ChapterTable.COL_BOOKMARK
 import eu.kanade.tachiyomi.data.database.tables.ChapterTable.COL_CHAPTER_NUMBER
 import eu.kanade.tachiyomi.data.database.tables.ChapterTable.COL_DATE_FETCH
 import eu.kanade.tachiyomi.data.database.tables.ChapterTable.COL_DATE_UPLOAD
+import eu.kanade.tachiyomi.data.database.tables.ChapterTable.COL_HIDDEN
 import eu.kanade.tachiyomi.data.database.tables.ChapterTable.COL_ID
 import eu.kanade.tachiyomi.data.database.tables.ChapterTable.COL_LAST_PAGE_READ
 import eu.kanade.tachiyomi.data.database.tables.ChapterTable.COL_MANGA_ID
@@ -56,6 +57,7 @@ class ChapterPutResolver : DefaultPutResolver<Chapter>() {
         put(COL_LAST_PAGE_READ, obj.last_page_read)
         put(COL_CHAPTER_NUMBER, obj.chapter_number)
         put(COL_SOURCE_ORDER, obj.source_order)
+        put(COL_HIDDEN, obj.isHiddenInList)
     }
 }
 
@@ -74,6 +76,7 @@ class ChapterGetResolver : DefaultGetResolver<Chapter>() {
         last_page_read = cursor.getInt(cursor.getColumnIndex(COL_LAST_PAGE_READ))
         chapter_number = cursor.getFloat(cursor.getColumnIndex(COL_CHAPTER_NUMBER))
         source_order = cursor.getInt(cursor.getColumnIndex(COL_SOURCE_ORDER))
+        isHiddenInList = cursor.getInt(cursor.getColumnIndex(COL_HIDDEN)) == 1
     }
 }
 

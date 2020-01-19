@@ -36,6 +36,7 @@
     <string name="action_filter_bookmarked">Bookmarked</string>
     <string name="action_filter_unread">Unread</string>
     <string name="action_filter_read">Read</string>
+    <string name="action_filter_hidden">Hidden</string>
     <string name="action_filter_empty">Remove filter</string>
     <string name="action_sort_alpha">Alphabetically</string>
     <string name="action_sort_total">Total chapters</string>
@@ -50,6 +51,10 @@
     <string name="action_mark_as_read">Mark as read</string>
     <string name="action_mark_as_unread">Mark as unread</string>
     <string name="action_mark_previous_as_read">Mark previous as read</string>
+    <string name="action_mark_as_hidden">Mark as hidden</string>
+    <string name="action_mark_as_visible">Mark as visible</string>
+    <string name="action_hide_chapter">Hide chapter</string>
+    <string name="action_show_chapter">Show chapter</string>
     <string name="action_download">Download</string>
     <string name="action_download_unread">Download unread chapters</string>
     <string name="action_bookmark">Bookmark</string>

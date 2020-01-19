@@ -57,6 +57,10 @@ interface Manga : SManga {
         get() = chapter_flags and SORTING_MASK
         set(sort) = setFlags(sort, SORTING_MASK)
 
+    var showHidden: Int
+        get() = chapter_flags and HIDDEN_MASK
+        set(showHidden) = setFlags(showHidden, HIDDEN_MASK)
+
     companion object {
 
         const val SORT_DESC = 0x00000000
@@ -86,6 +90,10 @@ interface Manga : SManga {
         const val DISPLAY_NAME = 0x00000000
         const val DISPLAY_NUMBER = 0x00100000
         const val DISPLAY_MASK = 0x00100000
+
+        const val HIDE_HIDDEN = 0x00000000
+        const val SHOW_HIDDEN = 0x01000000
+        const val HIDDEN_MASK = 0x01000000
 
         fun create(source: Long): Manga = MangaImpl().apply {
             this.source = source

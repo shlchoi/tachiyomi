@@ -68,9 +68,10 @@ class ChaptersSettingsSheet(
             private val unread = Item.CheckboxGroup(R.string.action_filter_unread, this)
             private val downloaded = Item.CheckboxGroup(R.string.action_filter_downloaded, this)
             private val bookmarked = Item.CheckboxGroup(R.string.action_filter_bookmarked, this)
+            private val hidden = Item.CheckboxGroup(R.string.action_filter_hidden, this)
 
             override val header = null
-            override val items = listOf(read, unread, downloaded, bookmarked)
+            override val items = listOf(read, unread, downloaded, bookmarked, hidden)
             override val footer = null
 
             override fun initModels() {
@@ -79,6 +80,7 @@ class ChaptersSettingsSheet(
                 downloaded.checked = presenter.onlyDownloaded()
                 downloaded.enabled = !presenter.forceDownloaded()
                 bookmarked.checked = presenter.onlyBookmarked()
+                hidden.checked = presenter.showHidden()
             }
 
             override fun onItemClicked(item: Item) {
@@ -89,6 +91,7 @@ class ChaptersSettingsSheet(
                     unread -> presenter.setUnreadFilter(item.checked)
                     downloaded -> presenter.setDownloadedFilter(item.checked)
                     bookmarked -> presenter.setBookmarkedFilter(item.checked)
+                    hidden -> presenter.setHiddenFilter(item.checked)
                 }
 
                 initModels()

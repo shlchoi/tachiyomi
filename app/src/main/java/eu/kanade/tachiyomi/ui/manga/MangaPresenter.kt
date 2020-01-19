@@ -374,6 +374,9 @@ class MangaPresenter(
         if (onlyBookmarked()) {
             observable = observable.filter { it.bookmark }
         }
+        if (!showHidden()) {
+            observable = observable.filter { !it.isHiddenInList }
+        }
         val sortFunction: (Chapter, Chapter) -> Int = when (manga.sorting) {
             Manga.SORTING_SOURCE -> when (sortDescending()) {
                 true -> { c1, c2 -> c1.source_order.compareTo(c2.source_order) }
@@ -458,6 +461,17 @@ class MangaPresenter(
         Observable.from(selectedChapters)
             .doOnNext { chapter ->
                 chapter.bookmark = bookmarked
+            }
+            .toList()
+            .flatMap { db.updateChaptersProgress(it).asRxObservable() }
+            .subscribeOn(Schedulers.io())
+            .subscribe()
+    }
+
+    fun markChaptersAsHidden(selectedChapters: List<ChapterItem>, hidden: Boolean) {
+        Observable.from(selectedChapters)
+            .doOnNext { chapter ->
+                chapter.isHiddenInList = hidden
             }
             .toList()
             .flatMap { db.updateChaptersProgress(it).asRxObservable() }
@@ -550,6 +564,24 @@ class MangaPresenter(
         refreshChapters()
     }
 
+    fun setHiddenFilter(showHidden: Boolean) {
+        manga.showHidden = if (showHidden) Manga.SHOW_HIDDEN else Manga.SHOW_ALL
+        db.updateFlags(manga).executeAsBlocking()
+        refreshChapters()
+    }
+
+    /**
+     * Removes all filters and requests an UI update.
+     */
+    fun removeFilters() {
+        manga.readFilter = Manga.SHOW_ALL
+        manga.downloadedFilter = Manga.SHOW_ALL
+        manga.bookmarkedFilter = Manga.SHOW_ALL
+        manga.showHidden = Manga.SHOW_ALL
+        db.updateFlags(manga).executeAsBlocking()
+        refreshChapters()
+    }
+
     /**
      * Sets the active display mode.
      * @param mode the mode to set.
@@ -602,6 +634,10 @@ class MangaPresenter(
      */
     fun onlyRead(): Boolean {
         return manga.readFilter == Manga.SHOW_READ
+    }
+
+    fun showHidden(): Boolean {
+        return manga.showHidden == Manga.SHOW_HIDDEN
     }
 
     /**

@@ -10,10 +10,7 @@ import eu.kanade.tachiyomi.data.database.models.Manga
 import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.ui.base.holder.BaseFlexibleViewHolder
 import java.util.Date
-import kotlinx.android.synthetic.main.chapters_item.bookmark_icon
-import kotlinx.android.synthetic.main.chapters_item.chapter_description
-import kotlinx.android.synthetic.main.chapters_item.chapter_title
-import kotlinx.android.synthetic.main.chapters_item.download_text
+import kotlinx.android.synthetic.main.chapters_item.*
 
 class ChapterHolder(
     view: View,
@@ -30,6 +27,8 @@ class ChapterHolder(
             }
             else -> chapter.name
         }
+
+        chapter_visibility.visibility = if (item.isHiddenInList) View.VISIBLE else View.GONE
 
         // Set correct text color
         val chapterColor = when {
