@@ -28,6 +28,8 @@ object ChapterTable {
 
     const val COL_SOURCE_ORDER = "source_order"
 
+    const val COL_HIDDEN = "hidden"
+
     val createTableQuery: String
         get() = """CREATE TABLE $TABLE(
             $COL_ID INTEGER NOT NULL PRIMARY KEY,
@@ -40,6 +42,7 @@ object ChapterTable {
             $COL_LAST_PAGE_READ INT NOT NULL,
             $COL_CHAPTER_NUMBER FLOAT NOT NULL,
             $COL_SOURCE_ORDER INTEGER NOT NULL,
+            $COL_HIDDEN BOOLEAN NOT NULL,
             $COL_DATE_FETCH LONG NOT NULL,
             $COL_DATE_UPLOAD LONG NOT NULL,
             FOREIGN KEY($COL_MANGA_ID) REFERENCES ${MangaTable.TABLE} (${MangaTable.COL_ID})
@@ -61,5 +64,8 @@ object ChapterTable {
 
     val addScanlator: String
         get() = "ALTER TABLE $TABLE ADD COLUMN $COL_SCANLATOR TEXT DEFAULT NULL"
+
+    val addHidden: String
+        get() = "ALTER TABLE $TABLE ADD COLUMN $COL_HIDDEN BOOLEAN DEFAULT FALSE"
 
 }
