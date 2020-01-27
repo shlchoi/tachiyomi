@@ -1,6 +1,6 @@
 | Build | Stable |
 |-------|--------|
-| [![Travis](https://img.shields.io/travis/shlchoi/tachiyomi.svg)](https://travis-ci.org/shlchoi/tachiyomi) | [![stable release](https://img.shields.io/github/release/shlchoi/tachiyomi.svg?maxAge=3600&label=download)](https://github.com/shlchoi/tachiyomi/releases) |
+| [![Travis](https://travis-ci.org/shlchoi/tachiyomi.svg?branch=master)](https://travis-ci.org/shlchoi/tachiyomi) | [![stable release](https://img.shields.io/github/release/shlchoi/tachiyomi.svg?maxAge=3600&label=download)](https://github.com/shlchoi/tachiyomi/releases) |
 
 
 # ![app icon](./.github/readme-images/app-icon.png)Tachiyomi
