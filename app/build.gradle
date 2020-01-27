@@ -5,6 +5,28 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'com.github.zellius.shortcut-helper'
+apply plugin: 'checkstyle'
+
+def configDir = "${project.rootDir}/quality"
+checkstyle {
+    toolVersion '8.1'
+    configFile file("$configDir/checkstyle/checkstyle.xml")
+    configProperties.checkstyleSuppressionsPath = file("$configDir/checkstyle/suppressions.xml").absolutePath
+}
+
+task checkstyle(type: Checkstyle) {
+    group 'verification'
+
+    configFile file("$configDir/checkstyle/checkstyle.xml")
+    configProperties.checkstyleSuppressionsPath = file("$configDir/checkstyle/suppressions.xml").absolutePath
+    source 'src'
+    include '**/*.kt'
+    exclude '**/gen/**'
+
+    classpath = files()
+    ignoreFailures = false
+}
+
 
 shortcutHelper.filePath = './shortcuts.xml'
 

@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC "-//Puppy Crawl//DTD Suppressions 1.1//EN"
+    "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
+<suppressions>
+
+    <!-- TODO comments are a good thing during our development. Can remove closer to production -->
+    <suppress files=".*.java" checks="TodoComment"/>
+
+    <!-- test classes with public final fields-->
+    <suppress files=".*/(androidTest|test)/.*.java" id="NoPublicFinalFieldVisibilityModifier"/>
+
+    <!-- Allow static imports and magic numbers in test files -->
+    <suppress files=".*/(androidTest|test)/.*.java" checks="AvoidStaticImport"/>
+    <suppress files=".*/(androidTest|test)/.*.java" checks="MagicNumber"/>
+    <suppress files="mocks/.*/.*.java" checks="MagicNumber"/>
+    <suppress files="mocks/.*/.*.java" checks="AvoidStaticImport"/>
+
+</suppressions>

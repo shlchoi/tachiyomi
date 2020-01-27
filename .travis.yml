@@ -22,22 +22,31 @@ before_install:
 - mkdir "$ANDROID_HOME/licenses" || true
 - echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > "$ANDROID_HOME/licenses/android-sdk-license"
 - echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
-script: ".travis/build.sh"
+jobs:
+  include:
+    - stage: "Verification"
+      name: "Checkstyle" 
+      script: ./gradlew checkstyle
+    - name: "Lint" 
+      script: ./gradlew lint
+    - stage: "Build"
+      script: .travis/build.sh
+      deploy:
+        provider: releases
+        api_key:
+          secure: ZipG4psaqbjATw+JEAzzqVbimir/xmX/OZuazTHSEB/WTvIkYK5sKsPpSBvYT3Kn72P0H413LdgCzUe0Xywc35Yx69Nn/nasgWTZnZnV5fmLmKbflQ3PsCcY7RSH9FOMLyz+armeNTQOyQqxe2z5JEZrA1vPnJPzOm5b3hgrfr7B3M7obW3cpQxOtoHvBkQ4uct4vkUg/LAppjAfchvG/eZ5hUIvlKg0AoUxyd0s5IafEnOijVg680OxvETTzG8UOCHUChj67B0tQHcuk+GUlq24RngNgn8/Up3sNWFiAizNpxAQE8IPpkLf6+H7+Bu5BYyjG5snd4q8DAQSzOrDmUZQU2qY5V5Z+UuoeH/gIYondr90EBeRAJOuuIhE2f7JHBKR9O97dRrcUO/degSMygwrdZ2wFgaLNno61aRTnuwq63tOa2X+lbiHfVJv2DB6+sn3HUAgbZmk9edDbWMM199kr6Hjrz5DCT6M++CKbcoRNflt0md5ZuDQeNrod3zAieBM647IKPC/eoHYf8Jwwp1zp7VIy4gZddqqnD4Kj7JfH1+dez+/3wdPpsJ4p+cUx5g7+M4Kv+zUFiJRcGZIyTVVP/Qwmo0ZIW7dKbu3UB+p/48GT5p/i/Q+nRKSKp/+5kH3Mege/t2R+e85S2f30xTou5g/JoAzcDftKA8yBLI=
+        file: app-aligned.apk
+        skip_cleanup: true
+        draft: true
+        on:
+          repo: shlchoi/tachiyomi
+          tags: true
 before_cache:
 - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
-- rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+- rm -rf $HOME/.gradle/caches/*/plugin-resolution/
 cache:
   directories:
   - "$HOME/.gradle/caches/"
   - "$HOME/.gradle/wrapper/"
   - "$HOME/.android/build-cache"
-deploy:
-  provider: releases
-  api_key:
-    secure: ZipG4psaqbjATw+JEAzzqVbimir/xmX/OZuazTHSEB/WTvIkYK5sKsPpSBvYT3Kn72P0H413LdgCzUe0Xywc35Yx69Nn/nasgWTZnZnV5fmLmKbflQ3PsCcY7RSH9FOMLyz+armeNTQOyQqxe2z5JEZrA1vPnJPzOm5b3hgrfr7B3M7obW3cpQxOtoHvBkQ4uct4vkUg/LAppjAfchvG/eZ5hUIvlKg0AoUxyd0s5IafEnOijVg680OxvETTzG8UOCHUChj67B0tQHcuk+GUlq24RngNgn8/Up3sNWFiAizNpxAQE8IPpkLf6+H7+Bu5BYyjG5snd4q8DAQSzOrDmUZQU2qY5V5Z+UuoeH/gIYondr90EBeRAJOuuIhE2f7JHBKR9O97dRrcUO/degSMygwrdZ2wFgaLNno61aRTnuwq63tOa2X+lbiHfVJv2DB6+sn3HUAgbZmk9edDbWMM199kr6Hjrz5DCT6M++CKbcoRNflt0md5ZuDQeNrod3zAieBM647IKPC/eoHYf8Jwwp1zp7VIy4gZddqqnD4Kj7JfH1+dez+/3wdPpsJ4p+cUx5g7+M4Kv+zUFiJRcGZIyTVVP/Qwmo0ZIW7dKbu3UB+p/48GT5p/i/Q+nRKSKp/+5kH3Mege/t2R+e85S2f30xTou5g/JoAzcDftKA8yBLI=
-  file: app-aligned.apk
-  skip_cleanup: true
-  draft: true
-  on:
-    repo: shlchoi/tachiyomi
-    tags: true
+
