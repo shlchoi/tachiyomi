@@ -23,7 +23,7 @@
         <item name="colorSurface">@color/dialogLight</item>
         <item name="colorOnSurface">@color/textColorPrimaryLight</item>
         <item name="colorOnBackground">@color/textColorPrimaryLight</item>
-        <item name="colorAccent">@color/colorAccentLight</item>
+        <item name="colorAccent">@color/textColorPrimaryLight</item>
 
         <!-- Base background/text colors -->
         <item name="android:colorBackground">@color/backgroundLight</item>
@@ -107,7 +107,7 @@
         <item name="colorSurface">@color/dialogDark</item>
         <item name="colorOnSurface">@color/textColorPrimaryDark</item>
         <item name="colorOnBackground">@color/textColorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccentDark</item>
+        <item name="colorAccent">@color/textColorPrimaryDark</item>
 
         <!-- Handles RTL text -->
         <item name="android:textAlignment">gravity</item>
