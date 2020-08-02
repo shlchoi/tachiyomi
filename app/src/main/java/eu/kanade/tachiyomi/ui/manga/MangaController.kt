@@ -1,7 +1,5 @@
 package eu.kanade.tachiyomi.ui.manga
 
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
@@ -17,10 +15,8 @@ import androidx.appcompat.view.ActionMode
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.bluelinelabs.conductor.ControllerChangeHandler
 import com.bluelinelabs.conductor.ControllerChangeType
-import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import eu.davidea.flexibleadapter.FlexibleAdapter
 import eu.davidea.flexibleadapter.SelectableAdapter
@@ -37,7 +33,6 @@ import eu.kanade.tachiyomi.source.LocalSource
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceManager
 import eu.kanade.tachiyomi.source.online.HttpSource
-import eu.kanade.tachiyomi.ui.base.controller.FabController
 import eu.kanade.tachiyomi.ui.base.controller.NucleusController
 import eu.kanade.tachiyomi.ui.base.controller.withFadeTransaction
 import eu.kanade.tachiyomi.ui.browse.migration.search.SearchController
@@ -64,15 +59,12 @@ import eu.kanade.tachiyomi.ui.webview.WebViewActivity
 import eu.kanade.tachiyomi.util.hasCustomCover
 import eu.kanade.tachiyomi.util.system.getResourceColor
 import eu.kanade.tachiyomi.util.system.toast
-import eu.kanade.tachiyomi.util.view.getCoordinates
-import eu.kanade.tachiyomi.util.view.shrinkOnScroll
 import eu.kanade.tachiyomi.util.view.snack
 import kotlin.math.min
 import kotlinx.android.synthetic.main.main_activity.root_coordinator
 import kotlinx.android.synthetic.main.main_activity.toolbar
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import reactivecircus.flowbinding.android.view.clicks
 import reactivecircus.flowbinding.recyclerview.scrollEvents
 import reactivecircus.flowbinding.swiperefreshlayout.refreshes
 import timber.log.Timber
@@ -82,7 +74,6 @@ import uy.kohesive.injekt.injectLazy
 
 class MangaController :
     NucleusController<MangaControllerBinding, MangaPresenter>,
-    FabController,
     ActionMode.Callback,
     FlexibleAdapter.OnItemClickListener,
     FlexibleAdapter.OnItemLongClickListener,
@@ -132,9 +123,6 @@ class MangaController :
      * Sheet containing filter/sort/display items.
      */
     private var settingsSheet: ChaptersSettingsSheet? = null
-
-    private var actionFab: ExtendedFloatingActionButton? = null
-    private var actionFabScrollListener: RecyclerView.OnScrollListener? = null
 
     /**
      * Action mode for multiple selection.
@@ -192,8 +180,6 @@ class MangaController :
         binding.recycler.addItemDecoration(ChapterDividerItemDecoration(view.context))
         binding.recycler.setHasFixedSize(true)
         chaptersAdapter?.fastScroller = binding.fastScroller
-
-        actionFabScrollListener = actionFab?.shrinkOnScroll(binding.recycler)
 
         // Skips directly to chapters list if navigated to from the library
         binding.recycler.post {
@@ -261,44 +247,6 @@ class MangaController :
         chaptersHeaderAdapter?.setHasActiveFilters(settingsSheet?.filters?.hasActiveFilters() == true)
     }
 
-    override fun configureFab(fab: ExtendedFloatingActionButton) {
-        actionFab = fab
-        fab.setText(R.string.action_start)
-        fab.setIconResource(R.drawable.ic_play_arrow_24dp)
-        fab.clicks()
-            .onEach {
-                val item = presenter.getNextUnreadChapter()
-                if (item != null) {
-                    // Create animation listener
-                    val revealAnimationListener: Animator.AnimatorListener = object : AnimatorListenerAdapter() {
-                        override fun onAnimationStart(animation: Animator?) {
-                            openChapter(item.chapter, true)
-                        }
-                    }
-
-                    // Get coordinates and start animation
-                    actionFab?.getCoordinates()?.let { coordinates ->
-                        if (!binding.revealView.showRevealEffect(
-                            coordinates.x,
-                            coordinates.y,
-                            revealAnimationListener
-                        )
-                        ) {
-                            openChapter(item.chapter)
-                        }
-                    }
-                } else {
-                    view?.context?.toast(R.string.no_next_chapter)
-                }
-            }
-            .launchIn(scope)
-    }
-
-    override fun cleanupFab(fab: ExtendedFloatingActionButton) {
-        actionFabScrollListener?.let { binding.recycler.removeOnScrollListener(it) }
-        actionFab = null
-    }
-
     override fun onDestroyView(view: View) {
         destroyActionModeIfNeeded()
         binding.actionToolbar.destroy()
@@ -308,20 +256,6 @@ class MangaController :
         settingsSheet = null
         updateToolbarTitleAlpha(255)
         super.onDestroyView(view)
-    }
-
-    override fun onActivityResumed(activity: Activity) {
-        if (view == null) return
-
-        // Check if animation view is visible
-        if (binding.revealView.isVisible) {
-            // Show the unreveal effect
-            actionFab?.getCoordinates()?.let { coordinates ->
-                binding.revealView.hideRevealEffect(coordinates.x, coordinates.y, 1920)
-            }
-        }
-
-        super.onActivityResumed(activity)
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -658,11 +592,6 @@ class MangaController :
             }
             actionMode?.invalidate()
         }
-
-        val context = view?.context
-        if (context != null && chapters.any { it.read }) {
-            actionFab?.text = context.getString(R.string.action_resume)
-        }
     }
 
     private fun fetchChaptersFromSource(manualFetch: Boolean = false) {
@@ -799,10 +728,6 @@ class MangaController :
             binding.actionToolbar.findItem(R.id.action_show_hide_chapter)?.setIcon(if (chapters.firstOrNull()?.isHidden == true) R.drawable.ic_visibility_black_24dp else R.drawable.ic_visibility_off_black_24dp)
             binding.actionToolbar.findItem(R.id.action_mark_as_read)?.isVisible = chapters.any { !it.chapter.read }
             binding.actionToolbar.findItem(R.id.action_mark_as_unread)?.isVisible = chapters.all { it.chapter.read }
-
-            // Hide FAB to avoid interfering with the bottom action toolbar
-            // actionFab?.hide()
-            actionFab?.isVisible = false
         }
         return false
     }
@@ -835,11 +760,6 @@ class MangaController :
         chaptersAdapter?.clearSelection()
         selectedChapters.clear()
         actionMode = null
-
-        // TODO: there seems to be a bug in MaterialComponents where the [ExtendedFloatingActionButton]
-        // fails to show up properly
-        // actionFab?.show()
-        actionFab?.isVisible = true
     }
 
     override fun onDetach(view: View) {
