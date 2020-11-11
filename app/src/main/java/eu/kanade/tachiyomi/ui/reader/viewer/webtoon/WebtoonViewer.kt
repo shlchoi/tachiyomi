@@ -15,10 +15,10 @@ import eu.kanade.tachiyomi.ui.reader.model.ChapterTransition
 import eu.kanade.tachiyomi.ui.reader.model.ReaderPage
 import eu.kanade.tachiyomi.ui.reader.model.ViewerChapters
 import eu.kanade.tachiyomi.ui.reader.viewer.BaseViewer
-import kotlin.math.max
-import kotlin.math.min
 import rx.subscriptions.CompositeSubscription
 import timber.log.Timber
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Implementation of a [BaseViewer] to display pages with a [RecyclerView].
@@ -71,39 +71,54 @@ class WebtoonViewer(val activity: ReaderActivity, val isContinuous: Boolean = tr
         recycler.itemAnimator = null
         recycler.layoutManager = layoutManager
         recycler.adapter = adapter
-        recycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                val position = layoutManager.findLastEndVisibleItemPosition()
-                val item = adapter.items.getOrNull(position)
-                val allowPreload = checkAllowPreload(item as? ReaderPage)
-                if (item != null && currentPage != item) {
-                    currentPage = item
-                    when (item) {
-                        is ReaderPage -> onPageSelected(item, allowPreload)
-                        is ChapterTransition -> onTransitionSelected(item)
+        recycler.addOnScrollListener(
+            object : RecyclerView.OnScrollListener() {
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    val position = layoutManager.findLastEndVisibleItemPosition()
+                    val item = adapter.items.getOrNull(position)
+                    val allowPreload = checkAllowPreload(item as? ReaderPage)
+                    if (item != null && currentPage != item) {
+                        currentPage = item
+                        when (item) {
+                            is ReaderPage -> onPageSelected(item, allowPreload)
+                            is ChapterTransition -> onTransitionSelected(item)
+                        }
                     }
-                }
 
-                if (dy < 0) {
-                    val firstIndex = layoutManager.findFirstVisibleItemPosition()
-                    val firstItem = adapter.items.getOrNull(firstIndex)
-                    if (firstItem is ChapterTransition.Prev && firstItem.to != null) {
-                        activity.requestPreloadChapter(firstItem.to)
+                    if (dy < 0) {
+                        val firstIndex = layoutManager.findFirstVisibleItemPosition()
+                        val firstItem = adapter.items.getOrNull(firstIndex)
+                        if (firstItem is ChapterTransition.Prev && firstItem.to != null) {
+                            activity.requestPreloadChapter(firstItem.to)
+                        }
                     }
                 }
             }
-        })
-        recycler.tapListener = { event ->
-            val positionY = event.rawY
-            val invertMode = config.tappingInverted
-            val topSideTap = positionY < recycler.height * 0.33f && config.tappingEnabled
-            val bottomSideTap = positionY > recycler.height * 0.66f && config.tappingEnabled
+        )
+        recycler.tapListener = f@{ event ->
+            if (!config.tappingEnabled) {
+                activity.toggleMenu()
+                return@f
+            }
 
-            val tappingInverted = invertMode == TappingInvertMode.VERTICAL || invertMode == TappingInvertMode.BOTH
+            val positionX = event.rawX
+            val positionY = event.rawY
+            val topSideTap = positionY < recycler.height * 0.25f
+            val bottomSideTap = positionY > recycler.height * 0.75f
+            val leftSideTap = positionX < recycler.width * 0.33f
+            val rightSideTap = positionX > recycler.width * 0.66f
+
+            val invertMode = config.tappingInverted
+            val invertVertical = invertMode == TappingInvertMode.VERTICAL || invertMode == TappingInvertMode.BOTH
+            val invertHorizontal = invertMode == TappingInvertMode.HORIZONTAL || invertMode == TappingInvertMode.BOTH
 
             when {
-                topSideTap && !tappingInverted || bottomSideTap && tappingInverted -> scrollUp()
-                bottomSideTap && !tappingInverted || topSideTap && tappingInverted -> scrollDown()
+                topSideTap && !invertVertical || bottomSideTap && invertVertical -> scrollUp()
+                bottomSideTap && !invertVertical || topSideTap && invertVertical -> scrollDown()
+
+                leftSideTap && !invertHorizontal || rightSideTap && invertHorizontal -> scrollUp()
+                rightSideTap && !invertHorizontal || leftSideTap && invertHorizontal -> scrollDown()
+
                 else -> activity.toggleMenu()
             }
         }

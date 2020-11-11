@@ -32,10 +32,11 @@ object Notifications {
      */
     private const val GROUP_DOWNLOADER = "group_downloader"
     const val CHANNEL_DOWNLOADER_PROGRESS = "downloader_progress_channel"
-    const val ID_DOWNLOAD_CHAPTER = -201
+    const val ID_DOWNLOAD_CHAPTER_PROGRESS = -201
     const val CHANNEL_DOWNLOADER_COMPLETE = "downloader_complete_channel"
-    const val ID_DOWNLOAD_CHAPTER_ERROR = -202
     const val ID_DOWNLOAD_CHAPTER_COMPLETE = -203
+    const val CHANNEL_DOWNLOADER_ERROR = "downloader_error_channel"
+    const val ID_DOWNLOAD_CHAPTER_ERROR = -202
 
     /**
      * Notification channel and ids used by the library updater.
@@ -81,46 +82,62 @@ object Notifications {
 
         listOf(
             NotificationChannel(
-                CHANNEL_COMMON, context.getString(R.string.channel_common),
+                CHANNEL_COMMON,
+                context.getString(R.string.channel_common),
                 NotificationManager.IMPORTANCE_LOW
             ),
             NotificationChannel(
-                CHANNEL_LIBRARY, context.getString(R.string.channel_library),
+                CHANNEL_LIBRARY,
+                context.getString(R.string.channel_library),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
                 setShowBadge(false)
             },
             NotificationChannel(
-                CHANNEL_DOWNLOADER_PROGRESS, context.getString(R.string.channel_progress),
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                group = GROUP_DOWNLOADER
-                setShowBadge(false)
-            },
-            NotificationChannel(
-                CHANNEL_DOWNLOADER_COMPLETE, context.getString(R.string.channel_complete),
+                CHANNEL_DOWNLOADER_PROGRESS,
+                context.getString(R.string.channel_progress),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
                 group = GROUP_DOWNLOADER
                 setShowBadge(false)
             },
             NotificationChannel(
-                CHANNEL_NEW_CHAPTERS, context.getString(R.string.channel_new_chapters),
+                CHANNEL_DOWNLOADER_COMPLETE,
+                context.getString(R.string.channel_complete),
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                group = GROUP_DOWNLOADER
+                setShowBadge(false)
+            },
+            NotificationChannel(
+                CHANNEL_DOWNLOADER_ERROR,
+                context.getString(R.string.channel_errors),
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                group = GROUP_DOWNLOADER
+                setShowBadge(false)
+            },
+            NotificationChannel(
+                CHANNEL_NEW_CHAPTERS,
+                context.getString(R.string.channel_new_chapters),
                 NotificationManager.IMPORTANCE_DEFAULT
             ),
             NotificationChannel(
-                CHANNEL_UPDATES_TO_EXTS, context.getString(R.string.channel_ext_updates),
+                CHANNEL_UPDATES_TO_EXTS,
+                context.getString(R.string.channel_ext_updates),
                 NotificationManager.IMPORTANCE_DEFAULT
             ),
             NotificationChannel(
-                CHANNEL_BACKUP_RESTORE_PROGRESS, context.getString(R.string.channel_progress),
+                CHANNEL_BACKUP_RESTORE_PROGRESS,
+                context.getString(R.string.channel_progress),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
                 group = GROUP_BACKUP_RESTORE
                 setShowBadge(false)
             },
             NotificationChannel(
-                CHANNEL_BACKUP_RESTORE_COMPLETE, context.getString(R.string.channel_complete),
+                CHANNEL_BACKUP_RESTORE_COMPLETE,
+                context.getString(R.string.channel_complete),
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 group = GROUP_BACKUP_RESTORE

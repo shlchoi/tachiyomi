@@ -7,6 +7,7 @@ import eu.kanade.tachiyomi.extension.model.Extension
 import eu.kanade.tachiyomi.extension.model.InstallStep
 import eu.kanade.tachiyomi.ui.base.holder.BaseFlexibleViewHolder
 import eu.kanade.tachiyomi.ui.base.holder.SlicedHolder
+import eu.kanade.tachiyomi.ui.browse.SourceListItem
 import eu.kanade.tachiyomi.util.system.LocaleHelper
 import io.github.mthli.slice.Slice
 import kotlinx.android.synthetic.main.extension_card_item.card
@@ -19,6 +20,7 @@ import kotlinx.android.synthetic.main.extension_card_item.warning
 
 class ExtensionHolder(view: View, override val adapter: ExtensionAdapter) :
     BaseFlexibleViewHolder(view, adapter),
+    SourceListItem,
     SlicedHolder {
 
     override val slice = Slice(card).apply {
@@ -42,11 +44,12 @@ class ExtensionHolder(view: View, override val adapter: ExtensionAdapter) :
         version.text = extension.versionName
         lang.text = LocaleHelper.getSourceDisplayName(extension.lang, itemView.context)
         warning.text = when {
-            extension is Extension.Untrusted -> itemView.context.getString(R.string.ext_untrusted).toUpperCase()
-            extension is Extension.Installed && extension.isObsolete -> itemView.context.getString(R.string.ext_obsolete).toUpperCase()
-            extension is Extension.Installed && extension.isUnofficial -> itemView.context.getString(R.string.ext_unofficial).toUpperCase()
-            else -> null
-        }
+            extension is Extension.Untrusted -> itemView.context.getString(R.string.ext_untrusted)
+            extension is Extension.Installed && extension.isObsolete -> itemView.context.getString(R.string.ext_obsolete)
+            extension is Extension.Installed && extension.isUnofficial -> itemView.context.getString(R.string.ext_unofficial)
+            extension.isNsfw -> itemView.context.getString(R.string.ext_nsfw_short)
+            else -> ""
+        }.toUpperCase()
 
         GlideApp.with(itemView.context).clear(image)
         if (extension is Extension.Available) {

@@ -30,6 +30,7 @@ import eu.kanade.tachiyomi.ui.base.controller.NucleusController
 import eu.kanade.tachiyomi.ui.base.controller.requestPermissionsSafe
 import eu.kanade.tachiyomi.ui.base.controller.withFadeTransaction
 import eu.kanade.tachiyomi.ui.browse.BrowseController
+import eu.kanade.tachiyomi.ui.browse.SourceDividerItemDecoration
 import eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceController
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchController
 import eu.kanade.tachiyomi.ui.browse.source.latest.LatestUpdatesController
@@ -148,7 +149,7 @@ class SourceController :
             )
         }
 
-        SourceOptionsDialog(item, items).showDialog(router)
+        SourceOptionsDialog(item.source.toString(), items).showDialog(router)
     }
 
     private fun disableSource(source: Source) {
@@ -269,17 +270,17 @@ class SourceController :
 
     class SourceOptionsDialog(bundle: Bundle? = null) : DialogController(bundle) {
 
-        private lateinit var item: SourceItem
+        private lateinit var source: String
         private lateinit var items: List<Pair<String, () -> Unit>>
 
-        constructor(item: SourceItem, items: List<Pair<String, () -> Unit>>) : this() {
-            this.item = item
+        constructor(source: String, items: List<Pair<String, () -> Unit>>) : this() {
+            this.source = source
             this.items = items
         }
 
         override fun onCreateDialog(savedViewState: Bundle?): Dialog {
             return MaterialDialog(activity!!)
-                .title(text = item.source.toString())
+                .title(text = source)
                 .listItems(
                     items = items.map { it.first },
                     waitForPositiveButton = false

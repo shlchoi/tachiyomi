@@ -12,6 +12,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ActionMode
+import androidx.core.graphics.blue
+import androidx.core.graphics.green
+import androidx.core.graphics.red
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -43,7 +46,6 @@ import eu.kanade.tachiyomi.ui.library.ChangeMangaCoverDialog
 import eu.kanade.tachiyomi.ui.library.LibraryController
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.ui.main.offsetAppbarHeight
-import eu.kanade.tachiyomi.ui.manga.chapter.ChapterDividerItemDecoration
 import eu.kanade.tachiyomi.ui.manga.chapter.ChapterItem
 import eu.kanade.tachiyomi.ui.manga.chapter.ChaptersAdapter
 import eu.kanade.tachiyomi.ui.manga.chapter.ChaptersSettingsSheet
@@ -56,11 +58,11 @@ import eu.kanade.tachiyomi.ui.reader.ReaderActivity
 import eu.kanade.tachiyomi.ui.recent.history.HistoryController
 import eu.kanade.tachiyomi.ui.recent.updates.UpdatesController
 import eu.kanade.tachiyomi.ui.webview.WebViewActivity
+import eu.kanade.tachiyomi.util.chapter.NoChaptersException
 import eu.kanade.tachiyomi.util.hasCustomCover
 import eu.kanade.tachiyomi.util.system.getResourceColor
 import eu.kanade.tachiyomi.util.system.toast
 import eu.kanade.tachiyomi.util.view.snack
-import kotlin.math.min
 import kotlinx.android.synthetic.main.main_activity.root_coordinator
 import kotlinx.android.synthetic.main.main_activity.toolbar
 import kotlinx.coroutines.flow.launchIn
@@ -71,6 +73,7 @@ import timber.log.Timber
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import kotlin.math.min
 
 class MangaController :
     NucleusController<MangaControllerBinding, MangaPresenter>,
@@ -113,16 +116,16 @@ class MangaController :
     private val coverCache: CoverCache by injectLazy()
 
     private val toolbarTextColor by lazy { view!!.context.getResourceColor(R.attr.colorOnPrimary) }
-    private var toolbarTextAlpha = 255
 
     private var mangaInfoAdapter: MangaInfoHeaderAdapter? = null
     private var chaptersHeaderAdapter: MangaChaptersHeaderAdapter? = null
     private var chaptersAdapter: ChaptersAdapter? = null
 
-    /**
-     * Sheet containing filter/sort/display items.
-     */
+    // Sheet containing filter/sort/display items.
     private var settingsSheet: ChaptersSettingsSheet? = null
+
+    // Snackbar to add manga to library after downloading chapter(s)
+    private var addSnackbar: Snackbar? = null
 
     /**
      * Action mode for multiple selection.
@@ -143,6 +146,19 @@ class MangaController :
 
     init {
         setHasOptionsMenu(true)
+    }
+
+    override fun getTitle(): String? {
+        return manga?.title
+    }
+
+    override fun onChangeStarted(handler: ControllerChangeHandler, type: ControllerChangeType) {
+        super.onChangeStarted(handler, type)
+
+        // Hide toolbar title on enter
+        if (type.isEnter) {
+            updateToolbarTitleAlpha()
+        }
     }
 
     override fun onChangeEnded(handler: ControllerChangeHandler, type: ControllerChangeType) {
@@ -177,7 +193,6 @@ class MangaController :
 
         binding.recycler.adapter = ConcatAdapter(mangaInfoAdapter, chaptersHeaderAdapter, chaptersAdapter)
         binding.recycler.layoutManager = LinearLayoutManager(view.context)
-        binding.recycler.addItemDecoration(ChapterDividerItemDecoration(view.context))
         binding.recycler.setHasFixedSize(true)
         chaptersAdapter?.fastScroller = binding.fastScroller
 
@@ -190,7 +205,6 @@ class MangaController :
             // Delayed in case we need to jump to chapters
             binding.recycler.post {
                 updateToolbarTitleAlpha()
-                setTitle(manga?.title)
             }
         }
 
@@ -229,18 +243,14 @@ class MangaController :
             else -> min(binding.recycler.computeVerticalScrollOffset(), 255)
         }
 
-        if (calculatedAlpha != toolbarTextAlpha) {
-            toolbarTextAlpha = calculatedAlpha
-
-            activity?.toolbar?.setTitleTextColor(
-                Color.argb(
-                    toolbarTextAlpha,
-                    Color.red(toolbarTextColor),
-                    Color.green(toolbarTextColor),
-                    Color.blue(toolbarTextColor)
-                )
+        activity?.toolbar?.setTitleTextColor(
+            Color.argb(
+                calculatedAlpha,
+                toolbarTextColor.red,
+                toolbarTextColor.green,
+                toolbarTextColor.blue
             )
-        }
+        )
     }
 
     private fun updateFilterIconState() {
@@ -254,6 +264,7 @@ class MangaController :
         chaptersHeaderAdapter = null
         chaptersAdapter = null
         settingsSheet = null
+        addSnackbar?.dismiss()
         updateToolbarTitleAlpha(255)
         super.onDestroyView(view)
     }
@@ -263,7 +274,8 @@ class MangaController :
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {
-        // Hide download options for local manga
+        // Hide options for local manga
+        menu.findItem(R.id.action_share).isVisible = !isLocalSource
         menu.findItem(R.id.download_group).isVisible = !isLocalSource
 
         // Hide options for non-library manga
@@ -274,6 +286,7 @@ class MangaController :
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
+            R.id.action_share -> shareManga()
             R.id.download_next, R.id.download_next_5, R.id.download_next_10,
             R.id.download_custom, R.id.download_unread, R.id.download_all
             -> downloadChapters(item.itemId)
@@ -609,7 +622,11 @@ class MangaController :
     fun onFetchChaptersError(error: Throwable) {
         isRefreshingChapters = false
         updateRefreshing()
-        activity?.toast(error.message)
+        if (error is NoChaptersException) {
+            activity?.toast(activity?.getString(R.string.no_chapters_error))
+        } else {
+            activity?.toast(error.message)
+        }
     }
 
     fun onChapterStatusChange(download: Download) {
@@ -804,7 +821,7 @@ class MangaController :
         val manga = presenter.manga
         presenter.downloadChapters(chapters)
         if (view != null && !manga.favorite) {
-            binding.recycler.snack(view.context.getString(R.string.snack_add_to_library), Snackbar.LENGTH_INDEFINITE) {
+            addSnackbar = activity!!.root_coordinator?.snack(view.context.getString(R.string.snack_add_to_library), Snackbar.LENGTH_INDEFINITE) {
                 setAction(R.string.action_add) {
                     addToLibrary(manga)
                 }
