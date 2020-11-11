@@ -10,7 +10,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.isVisible
-import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -46,6 +45,7 @@ import eu.kanade.tachiyomi.util.view.shrinkOnScroll
 import eu.kanade.tachiyomi.util.view.snack
 import eu.kanade.tachiyomi.widget.AutofitRecyclerView
 import eu.kanade.tachiyomi.widget.EmptyView
+import kotlinx.android.synthetic.main.main_activity.root_coordinator
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
@@ -215,7 +215,6 @@ open class BrowseSourceController(bundle: Bundle) :
                 id = R.id.recycler
                 layoutManager = LinearLayoutManager(context)
                 layoutParams = RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-                addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
             }
         } else {
             (binding.catalogueView.inflate(R.layout.source_recycler_autofit) as AutofitRecyclerView).apply {
@@ -403,7 +402,7 @@ open class BrowseSourceController(bundle: Bundle) :
 
             binding.emptyView.show(message, actions)
         } else {
-            snack = binding.catalogueView.snack(message, Snackbar.LENGTH_INDEFINITE) {
+            snack = activity!!.root_coordinator?.snack(message, Snackbar.LENGTH_INDEFINITE) {
                 setAction(R.string.action_retry, retryAction)
             }
         }

@@ -34,11 +34,12 @@ object DiskUtil {
      * Gets the available space for the disk that a file path points to, in bytes.
      */
     fun getAvailableStorageSpace(f: UniFile): Long {
-        val stat = StatFs(f.filePath)
-        val availBlocks = stat.availableBlocksLong
-        val blockSize = stat.blockSizeLong
-
-        return availBlocks * blockSize
+        return try {
+            val stat = StatFs(f.uri.path)
+            stat.availableBlocksLong * stat.blockSizeLong
+        } catch (_: Exception) {
+            -1L
+        }
     }
 
     /**

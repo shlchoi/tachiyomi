@@ -4,14 +4,12 @@ import android.app.Activity
 import android.app.SearchManager
 import android.content.Intent
 import android.os.Bundle
-import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-import androidx.core.net.toUri
 import androidx.core.view.isVisible
-import androidx.core.view.updateLayoutParams
+import androidx.preference.PreferenceDialogController
 import com.bluelinelabs.conductor.Conductor
 import com.bluelinelabs.conductor.Controller
 import com.bluelinelabs.conductor.ControllerChangeHandler
@@ -19,12 +17,12 @@ import com.bluelinelabs.conductor.Router
 import com.bluelinelabs.conductor.RouterTransaction
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.behavior.HideBottomViewOnScrollBehavior
-import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
 import eu.kanade.tachiyomi.BuildConfig
 import eu.kanade.tachiyomi.Migrations
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.notification.NotificationReceiver
+import eu.kanade.tachiyomi.data.preference.asImmediateFlow
 import eu.kanade.tachiyomi.databinding.MainActivityBinding
 import eu.kanade.tachiyomi.extension.api.ExtensionGithubApi
 import eu.kanade.tachiyomi.ui.base.activity.BaseActivity
@@ -33,6 +31,7 @@ import eu.kanade.tachiyomi.ui.base.controller.FabController
 import eu.kanade.tachiyomi.ui.base.controller.NoToolbarElevationController
 import eu.kanade.tachiyomi.ui.base.controller.RootController
 import eu.kanade.tachiyomi.ui.base.controller.TabbedController
+import eu.kanade.tachiyomi.ui.base.controller.ToolbarLiftOnScrollController
 import eu.kanade.tachiyomi.ui.base.controller.withFadeTransaction
 import eu.kanade.tachiyomi.ui.browse.BrowseController
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchController
@@ -45,15 +44,13 @@ import eu.kanade.tachiyomi.ui.recent.updates.UpdatesController
 import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.launchUI
 import eu.kanade.tachiyomi.util.system.toast
-import eu.kanade.tachiyomi.util.view.snack
-import java.util.Date
-import java.util.concurrent.TimeUnit
 import kotlinx.android.synthetic.main.main_activity.appbar
 import kotlinx.android.synthetic.main.main_activity.tabs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import timber.log.Timber
+import java.util.Date
+import java.util.concurrent.TimeUnit
 
 class MainActivity : BaseActivity<MainActivityBinding>() {
 
@@ -89,7 +86,7 @@ class MainActivity : BaseActivity<MainActivityBinding>() {
 
         setSupportActionBar(binding.toolbar)
 
-        tabAnimator = ViewHeightAnimator(binding.tabs)
+        tabAnimator = ViewHeightAnimator(binding.tabs, 0L)
         bottomNavAnimator = ViewHeightAnimator(binding.bottomNav)
 
         // Set behavior of bottom nav
@@ -129,39 +126,40 @@ class MainActivity : BaseActivity<MainActivityBinding>() {
             onBackPressed()
         }
 
-        router.addChangeListener(object : ControllerChangeHandler.ControllerChangeListener {
-            override fun onChangeStarted(
-                to: Controller?,
-                from: Controller?,
-                isPush: Boolean,
-                container: ViewGroup,
-                handler: ControllerChangeHandler
-            ) {
-                syncActivityViewWithController(to, from)
-            }
+        router.addChangeListener(
+            object : ControllerChangeHandler.ControllerChangeListener {
+                override fun onChangeStarted(
+                    to: Controller?,
+                    from: Controller?,
+                    isPush: Boolean,
+                    container: ViewGroup,
+                    handler: ControllerChangeHandler
+                ) {
+                    syncActivityViewWithController(to, from)
+                }
 
-            override fun onChangeCompleted(
-                to: Controller?,
-                from: Controller?,
-                isPush: Boolean,
-                container: ViewGroup,
-                handler: ControllerChangeHandler
-            ) {
+                override fun onChangeCompleted(
+                    to: Controller?,
+                    from: Controller?,
+                    isPush: Boolean,
+                    container: ViewGroup,
+                    handler: ControllerChangeHandler
+                ) {
+                }
             }
-        })
+        )
 
         syncActivityViewWithController(router.backstack.lastOrNull()?.controller())
 
         if (savedInstanceState == null) {
             // Show changelog prompt on update
             if (Migrations.upgrade(preferences) && !BuildConfig.DEBUG) {
-                showUpdateInfoSnackbar()
+                WhatsNewDialogController().showDialog(router)
             }
         }
 
-        setExtensionsBadge()
-        preferences.extensionUpdatesCount().asFlow()
-            .onEach { setExtensionsBadge() }
+        preferences.extensionUpdatesCount()
+            .asImmediateFlow { setExtensionsBadge() }
             .launchIn(scope)
     }
 
@@ -316,11 +314,14 @@ class MainActivity : BaseActivity<MainActivityBinding>() {
     }
 
     private fun setRoot(controller: Controller, id: Int) {
-        router.setRoot(RouterTransaction.with(controller).tag(id.toString()))
+        router.setRoot(controller.withFadeTransaction().tag(id.toString()))
     }
 
     private fun syncActivityViewWithController(to: Controller?, from: Controller? = null) {
         if (from is DialogController || to is DialogController) {
+            return
+        }
+        if (from is PreferenceDialogController || to is PreferenceDialogController) {
             return
         }
 
@@ -357,10 +358,16 @@ class MainActivity : BaseActivity<MainActivityBinding>() {
             to.configureFab(binding.rootFab)
         }
 
-        if (to is NoToolbarElevationController) {
-            binding.appbar.disableElevation()
-        } else {
-            binding.appbar.enableElevation()
+        when (to) {
+            is NoToolbarElevationController -> {
+                binding.appbar.disableElevation()
+            }
+            is ToolbarLiftOnScrollController -> {
+                binding.appbar.enableElevation(true)
+            }
+            else -> {
+                binding.appbar.enableElevation(false)
+            }
         }
     }
 
@@ -379,32 +386,6 @@ class MainActivity : BaseActivity<MainActivityBinding>() {
             }
 
             bottomViewNavigationBehavior.slideDown(binding.bottomNav)
-        }
-    }
-
-    private fun showUpdateInfoSnackbar() {
-        val snack = binding.rootCoordinator.snack(
-            getString(R.string.updated_version, BuildConfig.VERSION_NAME),
-            Snackbar.LENGTH_INDEFINITE
-        ) {
-            setAction(R.string.whats_new) {
-                val url = "https://github.com/inorichi/tachiyomi/releases/tag/v${BuildConfig.VERSION_NAME}"
-                val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-                startActivity(intent)
-            }
-
-            // Ensure the snackbar sits above the bottom nav
-            view.updateLayoutParams<CoordinatorLayout.LayoutParams> {
-                anchorId = binding.bottomNav.id
-                anchorGravity = Gravity.TOP
-                gravity = Gravity.TOP
-            }
-        }
-
-        // Manually handle dismiss delay since Snackbar.LENGTH_LONG is a too short
-        launchIO {
-            delay(10000)
-            snack.dismiss()
         }
     }
 
