@@ -14,7 +14,7 @@
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:drawablePadding="8dp"
+        android:drawablePadding="16dp"
         android:gravity="center_vertical|start"
         android:maxLines="1"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
