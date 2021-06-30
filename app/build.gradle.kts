@@ -26,12 +26,12 @@ android {
     ndkVersion = AndroidConfig.ndk
 
     defaultConfig {
-        applicationId = "ca.choisamson.tachiyomi"
+        applicationId = "eu.kanade.tachiyomi"
         minSdkVersion(AndroidConfig.minSdk)
         targetSdkVersion(AndroidConfig.targetSdk)
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         versionCode = 64
-        versionName = "0.11.1s"
+        versionName = "0.11.1e"
 
         buildConfigField("String", "COMMIT_COUNT", "\"${getCommitCount()}\"")
         buildConfigField("String", "COMMIT_SHA", "\"${getGitSha()}\"")
