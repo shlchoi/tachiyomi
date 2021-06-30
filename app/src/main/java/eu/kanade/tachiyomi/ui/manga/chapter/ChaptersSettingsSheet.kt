@@ -1,34 +1,38 @@
 package eu.kanade.tachiyomi.ui.manga.chapter
 
-import android.app.Activity
 import android.content.Context
+import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
+import androidx.core.view.isVisible
+import com.bluelinelabs.conductor.Router
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.database.models.Manga
 import eu.kanade.tachiyomi.ui.manga.MangaPresenter
+import eu.kanade.tachiyomi.util.view.popupMenu
 import eu.kanade.tachiyomi.widget.ExtendedNavigationView
-import eu.kanade.tachiyomi.widget.TabbedBottomSheetDialog
+import eu.kanade.tachiyomi.widget.ExtendedNavigationView.Item.TriStateGroup.State
+import eu.kanade.tachiyomi.widget.sheet.TabbedBottomSheetDialog
 
 class ChaptersSettingsSheet(
-    activity: Activity,
+    private val router: Router,
     private val presenter: MangaPresenter,
-    onGroupClickListener: (ExtendedNavigationView.Group) -> Unit
-) : TabbedBottomSheetDialog(activity) {
+    private val onGroupClickListener: (ExtendedNavigationView.Group) -> Unit
+) : TabbedBottomSheetDialog(router.activity!!) {
 
-    val filters: Filter
-    private val sort: Sort
-    private val display: Display
+    val filters = Filter(router.activity!!)
+    private val sort = Sort(router.activity!!)
+    private val display = Display(router.activity!!)
 
-    init {
-        filters = Filter(activity)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
         filters.onGroupClicked = onGroupClickListener
-
-        sort = Sort(activity)
         sort.onGroupClicked = onGroupClickListener
-
-        display = Display(activity)
         display.onGroupClicked = onGroupClickListener
+
+        binding.menu.isVisible = true
+        binding.menu.setOnClickListener { it.post { showPopupMenu(it) } }
     }
 
     override fun getTabViews(): List<View> = listOf(
@@ -42,6 +46,19 @@ class ChaptersSettingsSheet(
         R.string.action_sort,
         R.string.action_display
     )
+
+    private fun showPopupMenu(view: View) {
+        view.popupMenu(
+            menuRes = R.menu.default_chapter_filter,
+            onMenuItemClick = {
+                when (itemId) {
+                    R.id.set_as_default -> {
+                        SetChapterSettingsDialog(presenter.manga).showDialog(router)
+                    }
+                }
+            }
+        )
+    }
 
     /**
      * Filters group (unread, downloaded, ...).
@@ -59,39 +76,46 @@ class ChaptersSettingsSheet(
          * Returns true if there's at least one filter from [FilterGroup] active.
          */
         fun hasActiveFilters(): Boolean {
-            return filterGroup.items.any { it.checked }
+            return filterGroup.items.any { it.state != State.IGNORE.value }
         }
 
         inner class FilterGroup : Group {
 
-            private val read = Item.CheckboxGroup(R.string.action_filter_read, this)
-            private val unread = Item.CheckboxGroup(R.string.action_filter_unread, this)
-            private val downloaded = Item.CheckboxGroup(R.string.action_filter_downloaded, this)
-            private val bookmarked = Item.CheckboxGroup(R.string.action_filter_bookmarked, this)
-            private val hidden = Item.CheckboxGroup(R.string.action_filter_hidden, this)
+            private val downloaded = Item.TriStateGroup(R.string.action_filter_downloaded, this)
+            private val unread = Item.TriStateGroup(R.string.action_filter_unread, this)
+            private val bookmarked = Item.TriStateGroup(R.string.action_filter_bookmarked, this)
+            private val hidden = Item.TriStateGroup(R.string.action_filter_hidden, this)
 
             override val header = null
-            override val items = listOf(read, unread, downloaded, bookmarked, hidden)
+            override val items = listOf(downloaded, unread, bookmarked, hidden)
             override val footer = null
 
             override fun initModels() {
-                read.checked = presenter.onlyRead()
-                unread.checked = presenter.onlyUnread()
-                downloaded.checked = presenter.onlyDownloaded()
-                downloaded.enabled = !presenter.forceDownloaded()
-                bookmarked.checked = presenter.onlyBookmarked()
-                hidden.checked = presenter.showHidden()
+                if (presenter.forceDownloaded()) {
+                    downloaded.state = State.INCLUDE.value
+                    downloaded.enabled = false
+                } else {
+                    downloaded.state = presenter.onlyDownloaded().value
+                }
+                unread.state = presenter.onlyUnread().value
+                bookmarked.state = presenter.onlyBookmarked().value
+                hidden.state = presenter.showHidden().value
             }
 
             override fun onItemClicked(item: Item) {
-                item as Item.CheckboxGroup
-                item.checked = !item.checked
+                item as Item.TriStateGroup
+                val newState = when (item.state) {
+                    State.IGNORE.value -> State.INCLUDE
+                    State.INCLUDE.value -> State.EXCLUDE
+                    State.EXCLUDE.value -> State.IGNORE
+                    else -> throw Exception("Unknown State")
+                }
+                item.state = newState.value
                 when (item) {
-                    read -> presenter.setReadFilter(item.checked)
-                    unread -> presenter.setUnreadFilter(item.checked)
-                    downloaded -> presenter.setDownloadedFilter(item.checked)
-                    bookmarked -> presenter.setBookmarkedFilter(item.checked)
-                    hidden -> presenter.setHiddenFilter(item.checked)
+                    downloaded -> presenter.setDownloadedFilter(newState)
+                    unread -> presenter.setUnreadFilter(newState)
+                    bookmarked -> presenter.setBookmarkedFilter(newState)
+                    hidden -> presenter.setHiddenFilter(newState)
                 }
 
                 initModels()
@@ -129,11 +153,11 @@ class ChaptersSettingsSheet(
                 }
 
                 source.state =
-                    if (sorting == Manga.SORTING_SOURCE) order else Item.MultiSort.SORT_NONE
+                    if (sorting == Manga.CHAPTER_SORTING_SOURCE) order else Item.MultiSort.SORT_NONE
                 chapterNum.state =
-                    if (sorting == Manga.SORTING_NUMBER) order else Item.MultiSort.SORT_NONE
+                    if (sorting == Manga.CHAPTER_SORTING_NUMBER) order else Item.MultiSort.SORT_NONE
                 uploadDate.state =
-                    if (sorting == Manga.SORTING_UPLOAD_DATE) order else Item.MultiSort.SORT_NONE
+                    if (sorting == Manga.CHAPTER_SORTING_UPLOAD_DATE) order else Item.MultiSort.SORT_NONE
             }
 
             override fun onItemClicked(item: Item) {
@@ -152,9 +176,9 @@ class ChaptersSettingsSheet(
                 }
 
                 when (item) {
-                    source -> presenter.setSorting(Manga.SORTING_SOURCE)
-                    chapterNum -> presenter.setSorting(Manga.SORTING_NUMBER)
-                    uploadDate -> presenter.setSorting(Manga.SORTING_UPLOAD_DATE)
+                    source -> presenter.setSorting(Manga.CHAPTER_SORTING_SOURCE)
+                    chapterNum -> presenter.setSorting(Manga.CHAPTER_SORTING_NUMBER)
+                    uploadDate -> presenter.setSorting(Manga.CHAPTER_SORTING_UPLOAD_DATE)
                     else -> throw Exception("Unknown sorting")
                 }
 
@@ -186,8 +210,8 @@ class ChaptersSettingsSheet(
 
             override fun initModels() {
                 val mode = presenter.manga.displayMode
-                displayTitle.checked = mode == Manga.DISPLAY_NAME
-                displayChapterNum.checked = mode == Manga.DISPLAY_NUMBER
+                displayTitle.checked = mode == Manga.CHAPTER_DISPLAY_NAME
+                displayChapterNum.checked = mode == Manga.CHAPTER_DISPLAY_NUMBER
             }
 
             override fun onItemClicked(item: Item) {
@@ -198,8 +222,8 @@ class ChaptersSettingsSheet(
                 item.checked = true
 
                 when (item) {
-                    displayTitle -> presenter.setDisplayMode(Manga.DISPLAY_NAME)
-                    displayChapterNum -> presenter.setDisplayMode(Manga.DISPLAY_NUMBER)
+                    displayTitle -> presenter.setDisplayMode(Manga.CHAPTER_DISPLAY_NAME)
+                    displayChapterNum -> presenter.setDisplayMode(Manga.CHAPTER_DISPLAY_NUMBER)
                     else -> throw NotImplementedError("Unknown display mode")
                 }
 

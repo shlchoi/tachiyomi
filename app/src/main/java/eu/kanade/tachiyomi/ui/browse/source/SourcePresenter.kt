@@ -6,14 +6,10 @@ import eu.kanade.tachiyomi.source.CatalogueSource
 import eu.kanade.tachiyomi.source.LocalSource
 import eu.kanade.tachiyomi.source.SourceManager
 import eu.kanade.tachiyomi.ui.base.presenter.BasePresenter
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import rx.Observable
@@ -33,8 +29,6 @@ class SourcePresenter(
     val sourceManager: SourceManager = Injekt.get(),
     private val preferences: PreferencesHelper = Injekt.get()
 ) : BasePresenter<SourceController>() {
-
-    private val scope = CoroutineScope(Job() + Dispatchers.Main)
 
     var sources = getEnabledSources()
 
@@ -99,7 +93,7 @@ class SourcePresenter(
             .onStart { delay(500) }
             .distinctUntilChanged()
             .onEach { updateLastUsedSource(it) }
-            .launchIn(scope)
+            .launchIn(presenterScope)
     }
 
     private fun updateLastUsedSource(sourceId: Long) {
@@ -128,7 +122,7 @@ class SourcePresenter(
         return sourceManager.getCatalogueSources()
             .filter { it.lang in languages }
             .filterNot { it.id.toString() in disabledSourceIds }
-            .sortedBy { "(${it.lang}) ${it.name.toLowerCase()}" } +
+            .sortedBy { "(${it.lang}) ${it.name.lowercase()}" } +
             sourceManager.get(LocalSource.ID) as LocalSource
     }
 

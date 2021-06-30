@@ -4,9 +4,10 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import eu.kanade.tachiyomi.databinding.TrackItemBinding
-import eu.kanade.tachiyomi.util.view.inflate
+import eu.kanade.tachiyomi.util.view.applyElevationOverlay
+import uy.kohesive.injekt.api.get
 
-class TrackAdapter(controller: TrackController) : RecyclerView.Adapter<TrackHolder>() {
+class TrackAdapter(listener: OnClickListener) : RecyclerView.Adapter<TrackHolder>() {
 
     private lateinit var binding: TrackItemBinding
 
@@ -18,7 +19,7 @@ class TrackAdapter(controller: TrackController) : RecyclerView.Adapter<TrackHold
             }
         }
 
-    val rowClickListener: OnClickListener = controller
+    val rowClickListener: OnClickListener = listener
 
     fun getItem(index: Int): TrackItem? {
         return items.getOrNull(index)
@@ -30,6 +31,7 @@ class TrackAdapter(controller: TrackController) : RecyclerView.Adapter<TrackHold
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TrackHolder {
         binding = TrackItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        binding.card.applyElevationOverlay()
         return TrackHolder(binding, this)
     }
 

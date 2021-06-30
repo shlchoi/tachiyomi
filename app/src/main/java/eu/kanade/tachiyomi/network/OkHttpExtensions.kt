@@ -1,18 +1,27 @@
 package eu.kanade.tachiyomi.network
 
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import okhttp3.Call
 import okhttp3.Callback
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.internal.closeQuietly
 import rx.Observable
 import rx.Producer
 import rx.Subscription
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.fullType
+import uy.kohesive.injekt.api.get
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+
+val jsonMime = "application/json; charset=utf-8".toMediaType()
 
 fun Call.asObservable(): Observable<Response> {
     return Observable.unsafeCreate { subscriber ->
@@ -52,17 +61,19 @@ fun Call.asObservable(): Observable<Response> {
 }
 
 // Based on https://github.com/gildor/kotlin-coroutines-okhttp
-suspend fun Call.await(assertSuccess: Boolean = false): Response {
+suspend fun Call.await(): Response {
     return suspendCancellableCoroutine { continuation ->
         enqueue(
             object : Callback {
                 override fun onResponse(call: Call, response: Response) {
-                    if (assertSuccess && !response.isSuccessful) {
+                    if (!response.isSuccessful) {
                         continuation.resumeWithException(Exception("HTTP error ${response.code}"))
                         return
                     }
 
-                    continuation.resume(response)
+                    continuation.resume(response) {
+                        response.body?.closeQuietly()
+                    }
                 }
 
                 override fun onFailure(call: Call, e: IOException) {
@@ -104,4 +115,13 @@ fun OkHttpClient.newCallWithProgress(request: Request, listener: ProgressListene
         .build()
 
     return progressClient.newCall(request)
+}
+
+inline fun <reified T> Response.parseAs(): T {
+    // Avoiding Injekt.get<Json>() due to compiler issues
+    val json = Injekt.getInstance<Json>(fullType<Json>().type)
+    this.use {
+        val responseBody = it.body?.string().orEmpty()
+        return json.decodeFromString(responseBody)
+    }
 }

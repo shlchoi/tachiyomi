@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.source
 
 import android.content.Context
+import com.github.junrar.Archive
 import com.google.gson.JsonParser
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.source.model.Filter
@@ -14,8 +15,6 @@ import eu.kanade.tachiyomi.util.lang.compareToCaseInsensitiveNaturalOrder
 import eu.kanade.tachiyomi.util.storage.DiskUtil
 import eu.kanade.tachiyomi.util.storage.EpubFile
 import eu.kanade.tachiyomi.util.system.ImageUtil
-import junrar.Archive
-import junrar.rarfile.FileHeader
 import rx.Observable
 import timber.log.Timber
 import java.io.File
@@ -23,19 +22,16 @@ import java.io.FileInputStream
 import java.io.InputStream
 import java.util.Locale
 import java.util.concurrent.TimeUnit
-import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
 class LocalSource(private val context: Context) : CatalogueSource {
     companion object {
         const val ID = 0L
-        const val HELP_URL = "https://tachiyomi.org/help/guides/reading-local-manga/"
+        const val HELP_URL = "https://tachiyomi.org/help/guides/local-manga/"
 
         private const val COVER_NAME = "cover.jpg"
         private val SUPPORTED_ARCHIVE_TYPES = setOf("zip", "rar", "cbr", "cbz", "epub")
 
-        private val POPULAR_FILTERS = FilterList(OrderBy())
-        private val LATEST_FILTERS = FilterList(OrderBy().apply { state = Filter.Sort.Selection(1, false) })
         private val LATEST_THRESHOLD = TimeUnit.MILLISECONDS.convert(7, TimeUnit.DAYS)
 
         fun updateCover(context: Context, manga: SManga, input: InputStream): File? {
@@ -88,9 +84,9 @@ class LocalSource(private val context: Context) : CatalogueSource {
         when (state?.index) {
             0 -> {
                 mangaDirs = if (state.ascending) {
-                    mangaDirs.sortedBy { it.name.toLowerCase(Locale.ENGLISH) }
+                    mangaDirs.sortedBy { it.name.lowercase(Locale.ENGLISH) }
                 } else {
-                    mangaDirs.sortedByDescending { it.name.toLowerCase(Locale.ENGLISH) }
+                    mangaDirs.sortedByDescending { it.name.lowercase(Locale.ENGLISH) }
                 }
             }
             1 -> {
@@ -194,12 +190,10 @@ class LocalSource(private val context: Context) : CatalogueSource {
                     ChapterRecognition.parseChapterNumber(this, manga)
                 }
             }
-            .sortedWith(
-                Comparator { c1, c2 ->
-                    val c = c2.chapter_number.compareTo(c1.chapter_number)
-                    if (c == 0) c2.name.compareToCaseInsensitiveNaturalOrder(c1.name) else c
-                }
-            )
+            .sortedWith { c1, c2 ->
+                val c = c2.chapter_number.compareTo(c1.chapter_number)
+                if (c == 0) c2.name.compareToCaseInsensitiveNaturalOrder(c1.name) else c
+            }
             .toList()
 
         return Observable.just(chapters)
@@ -244,7 +238,7 @@ class LocalSource(private val context: Context) : CatalogueSource {
     }
 
     private fun isSupportedFile(extension: String): Boolean {
-        return extension.toLowerCase() in SUPPORTED_ARCHIVE_TYPES
+        return extension.lowercase() in SUPPORTED_ARCHIVE_TYPES
     }
 
     fun getFormat(chapter: SChapter): Format {
@@ -256,7 +250,7 @@ class LocalSource(private val context: Context) : CatalogueSource {
 
             return getFormat(chapFile)
         }
-        throw Exception("Chapter not found")
+        throw Exception(context.getString(R.string.chapter_not_found))
     }
 
     private fun getFormat(file: File): Format {
@@ -270,7 +264,7 @@ class LocalSource(private val context: Context) : CatalogueSource {
         } else if (extension.equals("epub", true)) {
             Format.Epub(file)
         } else {
-            throw Exception("Invalid chapter format")
+            throw Exception(context.getString(R.string.local_invalid_format))
         }
     }
 
@@ -278,7 +272,7 @@ class LocalSource(private val context: Context) : CatalogueSource {
         return when (val format = getFormat(chapter)) {
             is Format.Directory -> {
                 val entry = format.file.listFiles()
-                    ?.sortedWith(Comparator<File> { f1, f2 -> f1.name.compareToCaseInsensitiveNaturalOrder(f2.name) })
+                    ?.sortedWith { f1, f2 -> f1.name.compareToCaseInsensitiveNaturalOrder(f2.name) }
                     ?.find { !it.isDirectory && ImageUtil.isImage(it.name) { FileInputStream(it) } }
 
                 entry?.let { updateCover(context, manga, it.inputStream()) }
@@ -286,7 +280,7 @@ class LocalSource(private val context: Context) : CatalogueSource {
             is Format.Zip -> {
                 ZipFile(format.file).use { zip ->
                     val entry = zip.entries().toList()
-                        .sortedWith(Comparator<ZipEntry> { f1, f2 -> f1.name.compareToCaseInsensitiveNaturalOrder(f2.name) })
+                        .sortedWith { f1, f2 -> f1.name.compareToCaseInsensitiveNaturalOrder(f2.name) }
                         .find { !it.isDirectory && ImageUtil.isImage(it.name) { zip.getInputStream(it) } }
 
                     entry?.let { updateCover(context, manga, zip.getInputStream(it)) }
@@ -295,8 +289,8 @@ class LocalSource(private val context: Context) : CatalogueSource {
             is Format.Rar -> {
                 Archive(format.file).use { archive ->
                     val entry = archive.fileHeaders
-                        .sortedWith(Comparator<FileHeader> { f1, f2 -> f1.fileNameString.compareToCaseInsensitiveNaturalOrder(f2.fileNameString) })
-                        .find { !it.isDirectory && ImageUtil.isImage(it.fileNameString) { archive.getInputStream(it) } }
+                        .sortedWith { f1, f2 -> f1.fileName.compareToCaseInsensitiveNaturalOrder(f2.fileName) }
+                        .find { !it.isDirectory && ImageUtil.isImage(it.fileName) { archive.getInputStream(it) } }
 
                     entry?.let { updateCover(context, manga, archive.getInputStream(it)) }
                 }
@@ -313,9 +307,16 @@ class LocalSource(private val context: Context) : CatalogueSource {
         }
     }
 
-    private class OrderBy : Filter.Sort("Order by", arrayOf("Title", "Date"), Selection(0, true))
+    override fun getFilterList() = POPULAR_FILTERS
 
-    override fun getFilterList() = FilterList(OrderBy())
+    private val POPULAR_FILTERS = FilterList(OrderBy(context))
+    private val LATEST_FILTERS = FilterList(OrderBy(context).apply { state = Filter.Sort.Selection(1, false) })
+
+    private class OrderBy(context: Context) : Filter.Sort(
+        context.getString(R.string.local_filter_order_by),
+        arrayOf(context.getString(R.string.title), context.getString(R.string.date)),
+        Selection(0, true)
+    )
 
     sealed class Format {
         data class Directory(val file: File) : Format()

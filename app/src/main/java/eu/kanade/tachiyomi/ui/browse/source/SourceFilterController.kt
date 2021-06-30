@@ -24,7 +24,7 @@ class SourceFilterController : SettingsController() {
 
     private val onlineSources by lazy { Injekt.get<SourceManager>().getOnlineSources() }
 
-    override fun setupPreferenceScreen(screen: PreferenceScreen) = with(screen) {
+    override fun setupPreferenceScreen(screen: PreferenceScreen) = screen.apply {
         titleRes = R.string.label_sources
 
         // Get the list of active language codes.
@@ -42,11 +42,11 @@ class SourceFilterController : SettingsController() {
         )
 
         orderedLangs.forEach { lang ->
-            val sources = sourcesByLang[lang].orEmpty().sortedBy { it.name.toLowerCase() }
+            val sources = sourcesByLang[lang].orEmpty().sortedBy { it.name.lowercase() }
 
             // Create a preference group and set initial state and change listener
             switchPreferenceCategory {
-                preferenceScreen.addPreference(this)
+                this@apply.addPreference(this)
                 title = LocaleHelper.getSourceDisplayName(lang, context)
                 isPersistent = false
                 if (lang in activeLangsCodes) {

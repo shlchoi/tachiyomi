@@ -1,10 +1,10 @@
 package eu.kanade.tachiyomi.ui.category
 
 import android.view.View
+import androidx.recyclerview.widget.ItemTouchHelper
+import eu.davidea.viewholders.FlexibleViewHolder
 import eu.kanade.tachiyomi.data.database.models.Category
-import eu.kanade.tachiyomi.ui.base.holder.BaseFlexibleViewHolder
-import kotlinx.android.synthetic.main.categories_item.reorder
-import kotlinx.android.synthetic.main.categories_item.title
+import eu.kanade.tachiyomi.databinding.CategoriesItemBinding
 
 /**
  * Holder used to display category items.
@@ -12,10 +12,12 @@ import kotlinx.android.synthetic.main.categories_item.title
  * @param view The view used by category items.
  * @param adapter The adapter containing this holder.
  */
-class CategoryHolder(view: View, val adapter: CategoryAdapter) : BaseFlexibleViewHolder(view, adapter) {
+class CategoryHolder(view: View, val adapter: CategoryAdapter) : FlexibleViewHolder(view, adapter) {
+
+    private val binding = CategoriesItemBinding.bind(view)
 
     init {
-        setDragHandleView(reorder)
+        setDragHandleView(binding.reorder)
     }
 
     /**
@@ -24,7 +26,7 @@ class CategoryHolder(view: View, val adapter: CategoryAdapter) : BaseFlexibleVie
      * @param category The category to bind.
      */
     fun bind(category: Category) {
-        title.text = category.name
+        binding.title.text = category.name
     }
 
     /**
@@ -35,5 +37,13 @@ class CategoryHolder(view: View, val adapter: CategoryAdapter) : BaseFlexibleVie
     override fun onItemReleased(position: Int) {
         super.onItemReleased(position)
         adapter.onItemReleaseListener.onItemReleased(position)
+        binding.container.isDragged = false
+    }
+
+    override fun onActionStateChanged(position: Int, actionState: Int) {
+        super.onActionStateChanged(position, actionState)
+        if (actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
+            binding.container.isDragged = true
+        }
     }
 }

@@ -1,8 +1,13 @@
 package eu.kanade.tachiyomi.ui.setting
 
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import androidx.appcompat.widget.SearchView
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.ui.base.controller.withFadeTransaction
+import eu.kanade.tachiyomi.ui.setting.search.SettingsSearchController
 import eu.kanade.tachiyomi.util.preference.iconRes
 import eu.kanade.tachiyomi.util.preference.iconTint
 import eu.kanade.tachiyomi.util.preference.onClick
@@ -12,7 +17,7 @@ import eu.kanade.tachiyomi.util.system.getResourceColor
 
 class SettingsMainController : SettingsController() {
 
-    override fun setupPreferenceScreen(screen: PreferenceScreen) = with(screen) {
+    override fun setupPreferenceScreen(screen: PreferenceScreen) = screen.apply {
         titleRes = R.string.label_settings
 
         val tintColor = context.getResourceColor(R.attr.colorAccent)
@@ -24,7 +29,7 @@ class SettingsMainController : SettingsController() {
             onClick { navigateTo(SettingsGeneralController()) }
         }
         preference {
-            iconRes = R.drawable.ic_collections_bookmark_outline_24dp
+            iconRes = R.drawable.ic_library_outline_24dp
             iconTint = tintColor
             titleRes = R.string.pref_category_library
             onClick { navigateTo(SettingsLibraryController()) }
@@ -48,15 +53,15 @@ class SettingsMainController : SettingsController() {
             onClick { navigateTo(SettingsTrackingController()) }
         }
         preference {
-            iconRes = R.drawable.ic_explore_outline_24dp
+            iconRes = R.drawable.ic_browse_outline_24dp
             iconTint = tintColor
             titleRes = R.string.browse
             onClick { navigateTo(SettingsBrowseController()) }
         }
         preference {
-            iconRes = R.drawable.ic_backup_24dp
+            iconRes = R.drawable.ic_settings_backup_restore_24dp
             iconTint = tintColor
-            titleRes = R.string.backup
+            titleRes = R.string.label_backup
             onClick { navigateTo(SettingsBackupController()) }
         }
         preference {
@@ -65,12 +70,6 @@ class SettingsMainController : SettingsController() {
             titleRes = R.string.pref_category_security
             onClick { navigateTo(SettingsSecurityController()) }
         }
-        // preference {
-        //     iconRes = R.drawable.ic_outline_people_alt_24dp
-        //     iconTint = tintColor
-        //     titleRes = R.string.pref_category_parental_controls
-        //     onClick { navigateTo(SettingsParentalControlsController()) }
-        // }
         preference {
             iconRes = R.drawable.ic_code_24dp
             iconTint = tintColor
@@ -81,5 +80,32 @@ class SettingsMainController : SettingsController() {
 
     private fun navigateTo(controller: SettingsController) {
         router.pushController(controller.withFadeTransaction())
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        // Inflate menu
+        inflater.inflate(R.menu.settings_main, menu)
+
+        // Initialize search option.
+        val searchItem = menu.findItem(R.id.action_search)
+        val searchView = searchItem.actionView as SearchView
+        searchView.maxWidth = Int.MAX_VALUE
+
+        // Change hint to show global search.
+        searchView.queryHint = applicationContext?.getString(R.string.action_search_settings)
+
+        searchItem.setOnActionExpandListener(
+            object : MenuItem.OnActionExpandListener {
+                override fun onMenuItemActionExpand(item: MenuItem?): Boolean {
+                    preferences.lastSearchQuerySearchSettings().set("") // reset saved search query
+                    router.pushController(SettingsSearchController().withFadeTransaction())
+                    return true
+                }
+
+                override fun onMenuItemActionCollapse(item: MenuItem?): Boolean {
+                    return true
+                }
+            }
+        )
     }
 }
